@@ -95,3 +95,79 @@ gem 'dotenv-rails', groups: [:development, :test]
 bundle install
 touch .env
 echo '.env*' >> .gitignore # we tell Git not to push this file !
+git status # .env should not be there, we don't want to push it to Github.
+git add .
+git commit -m "Add dotenv - Protect my secret data in .env file"
+
+Cloudinary & Environment
+# Gemfile
+gem 'cloudinary', '~> 1.12.0'
+bundle install
+# .env
+# variable d'environnement, hash en clé: valeur
+CLOUDINARY_URL=cloudinary://298522699261255:Qa1ZfO4syfbOC-***********************8
+
+>ENV["CLOUDINARY_KEY"]
+# to vizualize our key !!! ASK teacher if cannot see
+
+Let’s upload two pictures
+curl https://c1.staticflickr.com/3/2889/33773377295_3614b9db80_b.jpg > san_francisco.jpg
+curl https://pbs.twimg.com/media/DC1Xyz3XoAAv7zB.jpg > boris_retreat_2017.jpg
+# rails c !!!
+Cloudinary::Uploader.upload("san_francisco.jpg")
+Cloudinary::Uploader.upload("boris_retreat_2017.jpg")
+
+rm san_francisco.jpg boris_retreat_2017.jpg
+And then go to cloudinary.com/console/media_library
+
+Let’s display them (EVEN if not present localy !!)
+<!-- app/views/articles/index.html.erb -->
+<%= cl_image_tag("THE_IMAGE_ID_FROM_LIBRARY",
+      width: 400, height: 300, crop: :fill) %>
+
+<!-- for face detection -->
+<%= cl_image_tag("IMAGE_WITH_FACE_ID",
+      width: 150, height: 150, crop: :thumb, gravity: :face) %>
+
+
+Active Storage
+It was a gem, but is now included in rails (versions 5.2 and above).
+It allows you to upload files to cloud storage
+(like cloudinary) and attach those files to Models!
+
+rails active_storage:install
+rails db:migrate
+# add two tables
+# many to many entre notre model et cloudinary
+# activate storage blobs stock nos clés
+This creates two tables in the database to handle the
+associations between our pictures uploaded on Cloudinary
+and any Model in our app.
+
+Config
+# config/storage.yml
+cloudinary:
+  service: Cloudinary
+Replace :local by :cloudinary in the config:
+
+# config/environments/development.rb
+config.active_storage.service = :cloudinary
+
+Model
+class Article < ApplicationRecord
+  has_one_attached :photo
+end
+And that is all you need! 🤓
+
+View & Controller
+<!-- app/views/articles/_form.html.erb -->
+<%= simple_form_for(article) do |f| %>
+  <!-- [...] -->
+  <%= f.input :photo, as: :file %>
+  <!-- [...] -->
+<% end %>
+
+# app/controllers/articles_controller.rb
+def article_params
+  params.require(:article).permit(:title, :body, :photo)
+end

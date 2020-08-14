@@ -1,5 +1,15 @@
 <p id="notice"><%= notice %></p>
 
+
+<% if @article.photos.attached? %>
+  <% @article.photos.each do |photo| %>
+    <%= cl_image_tag photo.key, height: 100, width: 150, crop: :fill, radius: :max %>
+  <% end %>
+<% end %>
+
+
+
+
 <p>
   <strong>Title:</strong>
   <%= @article.title %>
